@@ -89,11 +89,13 @@ specifying the ID of another TOC entry.
 ----
 ## Category 1
 
-[](){: #intro data-toc-label="Intro" data-toc-parent="category-1" } Some introductory text that doesn't warrant a heading.
+[](){: #intro data-toc-label="Intro" data-toc-parent="category-1" }
+Some introductory text that doesn't warrant a heading.
 
 ## Category 2
 
-[](){: #top data-toc-label="Technobabble" data-toc-parent="glossary" }**Technobabble** is really important:
+[](){: #top data-toc-label="Technobabble" data-toc-parent="glossary" }
+**Technobabble** is really important:
 
 * We want readers to understand the concept before moving on.
 * We don't want unnecessary headings breaking the page's flow.
