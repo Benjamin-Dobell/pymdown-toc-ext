@@ -1,0 +1,4 @@
+.idea/
+/dist/
+/pymdown_toc_ext.egg-info/
+/setup.py

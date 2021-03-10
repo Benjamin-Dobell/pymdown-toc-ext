@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "pymdown-toc-ext"
+version = "1.0.0"
+description = ""
+authors = ["Benjamin Dobell <benjamin.dobell@glassechidna.com.au>"]
+
+[tool.poetry.dependencies]
+python = "^3.6"
+Markdown = "^3.2"
+
+[tool.poetry.dev-dependencies]
+pytest = "^4.6"
+
+[tool.poetry.plugins."markdown.extensions"]
+toc_ext = "pymdown_toc_ext:TocExtExtension"
+
+[build-system]
+requires = ["setuptools", "poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
