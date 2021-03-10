@@ -1,4 +1,4 @@
-= pymdown-toc-ext: Table of Contents (Extended)
+= pymdown-toc-ext: Table of Contents (Extended) image:https://shields.io/pypi/v/pymdown-toc-ext["Version", link="https://pypi.org/project/pymdown-toc-ext/"] image:https://shields.io/pypi/l/pymdown-toc-ext["License", link="https://github.com/Benjamin-Dobell/pymdown-toc-ext/blob/master/LICENSE"]
 :toc:
 ifndef::env-github[:icons: font]
 ifdef::env-github[]
@@ -8,8 +8,6 @@ ifdef::env-github[]
 :caution-caption: :fire:
 :warning-caption: :warning:
 endif::[]
-
-toc::[]
 
 An extension for https://python-markdown.github.io[Python-Markdown]
 which extends the built-in
