@@ -245,6 +245,34 @@ will result in the table of contents:
 * B2
 * C
 
+=== Custom URLs entries
+
+Rather than linking to an ID on the same page, you can insert a table of
+contents entry that links to a URL by providing a `data-toc-url`
+attribute.
+
+[source,markdown]
+----
+## A
+
+The sky is falling. [ref 1]
+{: #sky-falling data-toc-label="#1 English Fairy Tales" data-toc-url="https://example.com" data-toc-child-of="references" }
+
+## B
+
+The earth is flat. [ref 2]
+{: #dawn-treader data-toc-label="#2 The Voyage of the Dawn Treader" data-toc-url="https://example.com" data-toc-child-of="references" }
+
+## References {: data-toc-sort }
+----
+
+Even though the link is to an external website, an ID is still mandatory.
+
+WARNING: The
+https://facelessuser.github.io/pymdown-extensions/extensions/magiclink/[PyMdown MagicLink]
+extensions breaks support for URLs appearing in attribute lists. You're
+unable to create custom URL entries whilst using this extension.
+
 == Contributing
 
 Contributions welcome.

@@ -1,6 +1,37 @@
+from xml.etree.ElementTree import Element, SubElement
+
 from markdown.extensions.toc import TocExtension, TocTreeprocessor
 
-def tokens_to_dicts(tokens):
+__monkey_patched = False
+
+def _monkey_patch_mkdocs():
+    if __monkey_patched:
+        return
+    try:
+        _monkey_patched = True
+        mkdocs_toc = __import__('mkdocs.structure.toc').structure.toc
+
+        class AnchorLinkExt(mkdocs_toc.AnchorLink):
+            def __init__(self, title, id, level, url):
+                super().__init__(title, id, level)
+                self._url = url
+
+            @mkdocs_toc.AnchorLink.url.getter
+            def url(self):
+                return self._url if self._url else super().url
+
+        def _parse_toc_token(token):
+            anchor = AnchorLinkExt(token['name'], token['id'], token['level'], token.get('url'))
+            for i in token['children']:
+                anchor.children.append(_parse_toc_token(i))
+            return anchor
+
+        # This is absurdly fragile
+        mkdocs_toc._parse_toc_token = _parse_toc_token
+    except ImportError:
+        pass
+
+def _tokens_to_dicts(tokens):
     token_dict = {}
     parent_token_dict = {}
 
@@ -16,7 +47,7 @@ def tokens_to_dicts(tokens):
 
     return token_dict, parent_token_dict
 
-def insert_ext_token(tokens, ext_token, token_dict, parent_token_dict, ext_token_dict):
+def _insert_ext_token(tokens, ext_token, token_dict, parent_token_dict, ext_token_dict):
     [token, parent_id, previous_id] = ext_token
 
     if 'level' not in token:
@@ -28,7 +59,7 @@ def insert_ext_token(tokens, ext_token, token_dict, parent_token_dict, ext_token
             if not parent:
                 ext_parent = ext_token_dict.get(parent_id)
                 if ext_parent:
-                    parent = insert_ext_token(tokens, ext_parent, token_dict, parent_token_dict, ext_token_dict)
+                    parent = _insert_ext_token(tokens, ext_parent, token_dict, parent_token_dict, ext_token_dict)
 
             if not parent:
                 return None
@@ -46,7 +77,7 @@ def insert_ext_token(tokens, ext_token, token_dict, parent_token_dict, ext_token
             if not previous:
                 ext_previous = ext_token_dict.get(previous_id)
                 if ext_previous:
-                    previous = insert_ext_token(tokens, ext_previous, token_dict, parent_token_dict, ext_token_dict)
+                    previous = _insert_ext_token(tokens, ext_previous, token_dict, parent_token_dict, ext_token_dict)
 
             if not previous:
                 return None
@@ -67,23 +98,44 @@ def insert_ext_token(tokens, ext_token, token_dict, parent_token_dict, ext_token
 
     return token
 
-def insert_ext_tokens(tokens, ext_tokens, token_dict, parent_token_dict):
+def _insert_ext_tokens(tokens, ext_tokens, token_dict, parent_token_dict):
     ext_token_dict = {}
 
     for ext_token in ext_tokens:
         ext_token_dict[ext_token[0]['id']] = ext_token
 
     for ext_token in ext_tokens:
-        insert_ext_token(tokens, ext_token, token_dict, parent_token_dict, ext_token_dict)
+        _insert_ext_token(tokens, ext_token, token_dict, parent_token_dict, ext_token_dict)
 
-def token_name_lower(token):
+def _token_name_lower(token):
     return token['name'].lower()
 
-def sort_tokens(tokens, behavior):
+def _sort_tokens(tokens, behavior):
     flags = set(behavior.split(' '))
 
     reverse = True if 'reverse' in flags else False
-    tokens.sort(key = token_name_lower, reverse=reverse)
+    tokens.sort(key = _token_name_lower, reverse=reverse)
+
+def _populate_toc_level_element(parent, toc_list):
+    ul = SubElement(parent, 'ul')
+    for token in toc_list:
+        li = SubElement(ul, 'li')
+        anchor = SubElement(li, 'a')
+        anchor.text = token['name']
+        anchor.attrib['href'] = token['url'] if 'url' in token else '#' + token['id']
+        if token['children']:
+            _populate_toc_level_element(li, token['children'])
+    return ul
+
+def _build_toc_element(toc_tokens, title):
+    div = Element('div')
+    div.attrib['class'] = 'toc'
+    if title:
+        header = SubElement(div, 'span')
+        header.attrib['class'] = 'toctitle'
+        header.text = title
+    _populate_toc_level_element(div, toc_tokens)
+    return div
 
 class TocExtTreeprocessor(TocTreeprocessor):
     def __init__(self, md, config):
@@ -93,12 +145,13 @@ class TocExtTreeprocessor(TocTreeprocessor):
     def build_toc_div(self, toc_tokens):
         ext_tokens = []
 
-        token_dict, parent_token_dict = tokens_to_dicts(toc_tokens)
+        token_dict, parent_token_dict = _tokens_to_dicts(toc_tokens)
         sort_token_ids = {}
         sort_root = None
 
         for el in self.doc.iter():
             attrib = el.attrib
+
             if 'id' in attrib:
                 id = attrib['id']
 
@@ -115,12 +168,22 @@ class TocExtTreeprocessor(TocTreeprocessor):
                             del parent_token_dict[id]
                         for child in token['children']:
                             parent_token_dict[child['id']] = parent_token
-                elif 'data-toc-label' in attrib:
+                    continue
+
+                if 'data-toc-sort' in attrib:
+                    sort_token_ids[id] = attrib['data-toc-sort']
+                    del attrib['data-toc-sort']
+
+                if 'data-toc-label' in attrib:
                     token = {
                         'id': id,
                         'name': attrib['data-toc-label'],
                         'children': []
                     }
+
+                    if 'data-toc-url' in attrib:
+                        token['url'] = attrib['data-toc-url']
+                        del attrib['data-toc-url']
 
                     parent_id = attrib['data-toc-child-of'] if 'data-toc-child-of' in attrib else None
                     if parent_id == id:
@@ -142,24 +205,25 @@ class TocExtTreeprocessor(TocTreeprocessor):
                     if previous_id:
                         del attrib['data-toc-after']
 
-                if 'data-toc-sort' in attrib:
-                    sort_token_ids[id] = attrib['data-toc-sort']
-                    del attrib['data-toc-sort']
-
             if 'data-toc-root-sort' in attrib:
                 sort_root = attrib['data-toc-root-sort']
                 del attrib['data-toc-root-sort']
 
-        insert_ext_tokens(toc_tokens, ext_tokens, token_dict, parent_token_dict)
+        _insert_ext_tokens(toc_tokens, ext_tokens, token_dict, parent_token_dict)
 
         for id, behavior in sort_token_ids.items():
             token = token_dict.get(id)
-            sort_tokens(token['children'], behavior)
+            _sort_tokens(token['children'], behavior)
 
         if sort_root:
-            sort_tokens(toc_tokens, sort_root)
+            _sort_tokens(toc_tokens, sort_root)
 
-        return super().build_toc_div(toc_tokens)
+        toc_element = _build_toc_element(toc_tokens, self.title)
+
+        if 'prettify' in self.md.treeprocessors:
+            self.md.treeprocessors['prettify'].run(toc_element)
+
+        return toc_element
 
     def run(self, doc):
         self.doc = doc
@@ -173,5 +237,20 @@ class TocExtExtension(TocExtension):
 
     TreeProcessorClass = TocExtTreeprocessor
 
+    @property
+    def config(self):
+        return self.__config
+
+    @config.setter
+    def config(self, config):
+        self.__config = z = {**self.__config, **config}
+
     def __init__(self, **kwargs):
+        self.__config = {
+            "patch_mkdocs": [True,
+                       'Whether we should patch mkdocs to enable support for'
+                       'custom URLs in its TOCs. Defaults to True']
+        }
         super().__init__(**kwargs)
+        if self.config['patch_mkdocs'][0]:
+            _monkey_patch_mkdocs()
