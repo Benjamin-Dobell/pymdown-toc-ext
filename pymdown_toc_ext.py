@@ -5,10 +5,11 @@ from markdown.extensions.toc import TocExtension, TocTreeprocessor
 __monkey_patched = False
 
 def _monkey_patch_mkdocs():
+    global __monkey_patched
     if __monkey_patched:
         return
     try:
-        _monkey_patched = True
+        __monkey_patched = True
         mkdocs_toc = __import__('mkdocs.structure.toc').structure.toc
 
         class AnchorLinkExt(mkdocs_toc.AnchorLink):
