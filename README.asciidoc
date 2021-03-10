@@ -273,6 +273,33 @@ https://facelessuser.github.io/pymdown-extensions/extensions/magiclink/[PyMdown 
 extensions breaks support for URLs appearing in attribute lists. You're
 unable to create custom URL entries whilst using this extension.
 
+==== Custom URL technical details
+
+We inject an additional `url` field into
+https://python-markdown.github.io/extensions/toc/[toc_tokens].
+
+We use this field when generating the content of `md.toc`, thus both
+`md.toc` and `md.toc_tokens` are URL-aware. If you've got direct access
+to either of these then you're good to go.
+
+===== mkdocs
+
+If you're using mkdocs, it doesn't expose `toc_tokens` directly, but
+rather its own data model. It has a `url` field, but is simply derived
+from `toc_tokens['id']`. Thus, we monkey-patch mkdocs to instead return
+`toc_tokens['url']` when it's available.
+
+Admittedly, this is quite a wonky solution. If you're not using the
+custom URL functionality you can disable the mkdocs patching in your
+`mkdocs.yml` with:
+
+[source,yaml]
+----
+markdown_extensions:
+  - toc_ext:
+    mkdocs_patch: false
+----
+
 == Contributing
 
 Contributions welcome.
