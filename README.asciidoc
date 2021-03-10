@@ -245,7 +245,7 @@ will result in the table of contents:
 * B2
 * C
 
-=== Custom URLs entries
+=== Custom URL entries
 
 Rather than linking to an ID on the same page, you can insert a table of
 contents entry that links to a URL by providing a `data-toc-url`
