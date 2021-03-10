@@ -80,19 +80,19 @@ will simply generate `<a id="top" href=""></a>`._
 
 By default, we insert entries at the _top_ of the Table of Contents.
 However, we may wish to insert the entry as a child of another entry.
-This is achieved by the inclusion of the `data-toc-parent` attribute
+This is achieved by the inclusion of the `data-toc-child-of` attribute
 specifying the ID of another TOC entry.
 
 [source,markdown]
 ----
 ## Category 1
 
-[](){: #intro data-toc-label="Intro" data-toc-parent="category-1" }
+[](){: #intro data-toc-label="Intro" data-toc-child-of="category-1" }
 Some introductory text that doesn't warrant a heading.
 
 ## Category 2
 
-[](){: #top data-toc-label="Technobabble" data-toc-parent="glossary" }
+[](){: #top data-toc-label="Technobabble" data-toc-child-of="glossary" }
 **Technobabble** is really important:
 
 * We want readers to understand the concept before moving on.
@@ -121,16 +121,16 @@ In the above example, we ended up with "Technobabble" appearing before
 "Peripheral". Perhaps we wanted the entries to appear in alphabetical
 order.
 
-_Instead_ of specifying a parent, we can specify `data-toc-previous`,
+_Instead_ of specifying `data-toc-child-of`, we specify `data-toc-after`,
 with the ID of the element that our entry should appear after.
 
 [source,markdown]
 ----
 ## Alphabet
 
-[](){: #b data-toc-label="B" data-toc-previous="a" } B.
-[](){: #a data-toc-label="A" data-toc-parent="alphabet" } A.
-[](){: #c data-toc-label="C" data-toc-previous="b" } C.
+[](){: #b data-toc-label="B" data-toc-after="a" } B.
+[](){: #a data-toc-label="A" data-toc-child-of="alphabet" } A.
+[](){: #c data-toc-label="C" data-toc-after="b" } C.
 ----
 
 The above will generate:
@@ -152,9 +152,9 @@ The example above can therefore be alternatively expressed as:
 ----
 ## Alphabet {: data-toc-sort }
 
-[](){: #b data-toc-label="B" data-toc-parent="alphabet" } B.
-[](){: #a data-toc-label="A" data-toc-parent="alphabet" } A.
-[](){: #c data-toc-label="C" data-toc-parent="alphabet" } C.
+[](){: #b data-toc-label="B" data-toc-child-of="alphabet" } B.
+[](){: #a data-toc-label="A" data-toc-child-of="alphabet" } A.
+[](){: #c data-toc-label="C" data-toc-child-of="alphabet" } C.
 ----
 
 ==== Reverse
@@ -165,9 +165,9 @@ Reverse ordering is supported by `data-toc-sort="reverse"` e.g.
 ----
 ## Alphabet {: data-toc-sort="reverse" }
 
-[](){: #b data-toc-label="B" data-toc-parent="alphabet" } B.
-[](){: #a data-toc-label="A" data-toc-parent="alphabet" } A.
-[](){: #c data-toc-label="C" data-toc-parent="alphabet" } C.
+[](){: #b data-toc-label="B" data-toc-child-of="alphabet" } B.
+[](){: #a data-toc-label="A" data-toc-child-of="alphabet" } A.
+[](){: #c data-toc-label="C" data-toc-child-of="alphabet" } C.
 ----
 
 will generate:

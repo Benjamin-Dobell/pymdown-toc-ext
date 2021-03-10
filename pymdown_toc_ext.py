@@ -122,11 +122,11 @@ class TocExtTreeprocessor(TocTreeprocessor):
                         'children': []
                     }
 
-                    parent_id = attrib['data-toc-parent'] if 'data-toc-parent' in attrib else None
+                    parent_id = attrib['data-toc-child-of'] if 'data-toc-child-of' in attrib else None
                     if parent_id == id:
                         parent_id = None
 
-                    previous_id = attrib['data-toc-previous'] if 'data-toc-previous' in attrib else None
+                    previous_id = attrib['data-toc-after'] if 'data-toc-after' in attrib else None
                     if previous_id == id:
                         previous_id = None
 
@@ -138,9 +138,9 @@ class TocExtTreeprocessor(TocTreeprocessor):
 
                     del attrib['data-toc-label']
                     if parent_id:
-                        del attrib['data-toc-parent']
+                        del attrib['data-toc-child-of']
                     if previous_id:
-                        del attrib['data-toc-previous']
+                        del attrib['data-toc-after']
 
                 if 'data-toc-sort' in attrib:
                     sort_token_ids[id] = attrib['data-toc-sort']
