@@ -144,7 +144,7 @@ The above will generate:
 
 Manual ordering each entry can be tedious. Frequently we just want to
 alphabetically sort child entries. We can mark an entry as sorted by
-setting `data-toc-sort`.
+adding the attribute `data-toc-sort`.
 
 The example above can therefore be alternatively expressed as:
 
@@ -207,6 +207,42 @@ will result in the table of contents:
 
 * A
 * B
+* C
+
+=== Removing an entry
+
+A Markdown heading may be omitted from the generated table of contents by
+adding the attribute `data-toc-omit`.
+
+[source,markdown]
+----
+## Heading 1
+## Heading 2 {: data-toc-omit }
+## Heading 3
+----
+
+will result in the table of contents:
+
+* Heading 1
+* Heading 3
+
+If you omit a heading that has sub-headings, the sub-headings will be
+moved up a level, replacing the omitted heading.
+
+[source,markdown]
+----
+## A
+## B {: data-toc-omit }
+### B1
+### B2
+## C
+----
+
+will result in the table of contents:
+
+* A
+* B1
+* B2
 * C
 
 == Contributing

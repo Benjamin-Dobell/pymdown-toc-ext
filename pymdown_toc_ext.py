@@ -102,7 +102,20 @@ class TocExtTreeprocessor(TocTreeprocessor):
             if 'id' in attrib:
                 id = attrib['id']
 
-                if 'data-toc-label' in attrib:
+                if 'data-toc-omit' in attrib:
+                    token = token_dict.get(id)
+                    if token:
+                        parent_token = parent_token_dict.get(id)
+                        siblings = parent_token['children'] if parent_token else toc_tokens
+                        index = siblings.index(token)
+                        siblings[index:index+1] = token['children']
+
+                        del token_dict[id]
+                        if id in parent_token_dict:
+                            del parent_token_dict[id]
+                        for child in token['children']:
+                            parent_token_dict[child['id']] = parent_token
+                elif 'data-toc-label' in attrib:
                     token = {
                         'id': id,
                         'name': attrib['data-toc-label'],
@@ -110,11 +123,10 @@ class TocExtTreeprocessor(TocTreeprocessor):
                     }
 
                     parent_id = attrib['data-toc-parent'] if 'data-toc-parent' in attrib else None
-                    previous_id = attrib['data-toc-previous'] if 'data-toc-previous' in attrib else None
-
                     if parent_id == id:
                         parent_id = None
 
+                    previous_id = attrib['data-toc-previous'] if 'data-toc-previous' in attrib else None
                     if previous_id == id:
                         previous_id = None
 
