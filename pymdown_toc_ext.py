@@ -1,5 +1,4 @@
 from markdown.extensions.toc import TocExtension, TocTreeprocessor
-import json
 
 def tokens_to_dicts(tokens):
     token_dict = {}
