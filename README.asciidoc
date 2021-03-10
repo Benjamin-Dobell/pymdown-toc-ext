@@ -297,7 +297,7 @@ custom URL functionality you can disable the mkdocs patching in your
 ----
 markdown_extensions:
   - toc_ext:
-    mkdocs_patch: false
+    patch_mkdocs: false
 ----
 
 == Contributing
