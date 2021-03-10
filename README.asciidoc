@@ -62,7 +62,7 @@ required.
 
 The purpose of the Table of Contents is to provide links to some point
 in your document. The standard `toc` extension just supports Markdown
-headers, however we support any element that have both an ID and a
+headers, however we support any element that has both an ID and a
 `data-toc-label` attribute.
 
 [source,markdown]
@@ -270,7 +270,7 @@ Even though the link is to an external website, an ID is still mandatory.
 
 WARNING: The
 https://facelessuser.github.io/pymdown-extensions/extensions/magiclink/[PyMdown MagicLink]
-extensions breaks support for URLs appearing in attribute lists. You're
+extension breaks support for URLs appearing in attribute lists. You're
 unable to create custom URL entries whilst using this extension.
 
 ==== Custom URL technical details
