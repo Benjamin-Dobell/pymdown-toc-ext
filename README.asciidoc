@@ -62,7 +62,7 @@ required.
 
 The purpose of the Table of Contents is to provide links to some point
 in your document. The standard `toc` extension just supports Markdown
-headers, however we’ll support any element with both and ID and the
+headers, however we support any element that have both an ID and a
 `data-toc-label` attribute.
 
 [source,markdown]
@@ -70,10 +70,10 @@ headers, however we’ll support any element with both and ID and the
 [](){: #top data-toc-label="Goto Top" }
 ----
 
-This will insert an entry with the text ``Goto Top'' linking to our
-empty (i.e. invisible) anchor with the ID `top`.
+This will insert an entry with the text "Goto Top" linking to our
+empty (i.e. invisible) anchor with the ID `top`.
 
-_*Note*: We strip `data-toc-*` attributes that we consume. So the above
+_**Note**: We strip `data-toc-*` attributes that we consume. So the above
 will simply generate `<a id="top" href=""></a>`._
 
 === Inserting a child entry
@@ -117,8 +117,8 @@ The above will generate:
 
 === Inserting after another entry (manual ordering)
 
-In the above example, we ended up with ``Technobabble'' appearing before
-``Peripheral''. Perhaps we wanted the entries to appear in alphabetical
+In the above example, we ended up with "Technobabble" appearing before
+"Peripheral". Perhaps we wanted the entries to appear in alphabetical
 order.
 
 _Instead_ of specifying a parent, we can specify `data-toc-previous`,
