@@ -1,6 +1,6 @@
 from xml.etree.ElementTree import Element, SubElement
 
-from markdown.extensions.toc import TocExtension, TocTreeprocessor
+from markdown.extensions.toc import TocExtension, TocTreeprocessor, get_name, stashedHTML2text, unescape, unique
 
 __monkey_patched = False
 
@@ -138,86 +138,131 @@ def _build_toc_element(toc_tokens, title):
     _populate_toc_level_element(div, toc_tokens)
     return div
 
+def _has_toc_attributes(attrib):
+    return ('data-toc-label' in attrib
+            or 'data-toc-url' in attrib
+            or 'data-toc-child-of' in attrib
+            or 'data-toc-after' in attrib)
+
+def _process_doc(doc, toc_tokens):
+    token_dict, parent_token_dict = _tokens_to_dicts(toc_tokens)
+
+    used_ids = set()
+
+    toc_ext_elements = []
+    sort_token_ids = {}
+    sort_root = None
+
+    for el in doc.iter():
+        attrib = el.attrib
+
+        if _has_toc_attributes(attrib):
+            toc_ext_elements.append(el)
+        elif 'id' in attrib:
+            id = attrib['id']
+            used_ids.add(id)
+
+            if 'data-toc-omit' in attrib:
+                token = token_dict.get(id)
+                if token:
+                    parent_token = parent_token_dict.get(id)
+                    siblings = parent_token['children'] if parent_token else toc_tokens
+                    index = siblings.index(token)
+                    siblings[index:index+1] = token['children']
+
+                    del attrib['data-toc-omit']
+                    del token_dict[id]
+                    if id in parent_token_dict:
+                        del parent_token_dict[id]
+                    for child in token['children']:
+                        parent_token_dict[child['id']] = parent_token
+            elif 'data-toc-sort' in attrib:
+                sort_token_ids[id] = attrib['data-toc-sort']
+                del attrib['data-toc-sort']
+
+        if 'data-toc-root-sort' in attrib:
+            sort_root = attrib['data-toc-root-sort']
+            del attrib['data-toc-root-sort']
+
+    return {
+        'used_ids': used_ids,
+        'toc_ext_elements': toc_ext_elements,
+        'parent_token_dict': parent_token_dict,
+        'token_dict': token_dict,
+        'sort_token_ids': sort_token_ids,
+        'sort_root': sort_root,
+    }
+
+def _get_toc_element_label(el):
+    return el.attrib.get('data-toc-label') or get_name(el)
+
+def _get_toc_element_id(treeprocessor, el, used_ids):
+    if 'id' not in el.attrib:
+        text = unescape(stashedHTML2text(_get_toc_element_label(el), treeprocessor.md))
+        el.attrib['id'] = unique(treeprocessor.slugify(text, treeprocessor.sep), used_ids)
+    return el.attrib['id']
+
 class TocExtTreeprocessor(TocTreeprocessor):
     def __init__(self, md, config):
         super().__init__(md, config)
 
     # Ssh ssh. Quiet now. This is fine. Not likely to break at all.
     def build_toc_div(self, toc_tokens):
+        toc_data = _process_doc(self.doc, toc_tokens)
+
         ext_tokens = []
 
-        token_dict, parent_token_dict = _tokens_to_dicts(toc_tokens)
-        sort_token_ids = {}
-        sort_root = None
+        # Add TOC tokens
+        for el in toc_data['toc_ext_elements']:
+            id = _get_toc_element_id(self, el, toc_data['used_ids'])
 
-        for el in self.doc.iter():
+            token = {
+                'id': id,
+                'name': _get_toc_element_label(el),
+                'children': []
+            }
+
             attrib = el.attrib
 
-            if 'id' in attrib:
-                id = attrib['id']
+            if 'data-toc-url' in attrib:
+                token['url'] = attrib['data-toc-url']
+                del attrib['data-toc-url']
 
-                if 'data-toc-omit' in attrib:
-                    token = token_dict.get(id)
-                    if token:
-                        parent_token = parent_token_dict.get(id)
-                        siblings = parent_token['children'] if parent_token else toc_tokens
-                        index = siblings.index(token)
-                        siblings[index:index+1] = token['children']
+            if 'data-toc-sort' in attrib:
+                toc_data['sort_token_ids'][id] = attrib['data-toc-sort']
+                del attrib['data-toc-sort']
 
-                        del token_dict[id]
-                        if id in parent_token_dict:
-                            del parent_token_dict[id]
-                        for child in token['children']:
-                            parent_token_dict[child['id']] = parent_token
-                    continue
+            parent_id = attrib['data-toc-child-of'] if 'data-toc-child-of' in attrib else None
+            if parent_id == id:
+                parent_id = None
 
-                if 'data-toc-sort' in attrib:
-                    sort_token_ids[id] = attrib['data-toc-sort']
-                    del attrib['data-toc-sort']
+            previous_id = attrib['data-toc-after'] if 'data-toc-after' in attrib else None
+            if previous_id == id:
+                previous_id = None
 
-                if 'data-toc-label' in attrib:
-                    token = {
-                        'id': id,
-                        'name': attrib['data-toc-label'],
-                        'children': []
-                    }
+            ext_tokens.append([
+                token,
+                parent_id,
+                previous_id
+            ])
 
-                    if 'data-toc-url' in attrib:
-                        token['url'] = attrib['data-toc-url']
-                        del attrib['data-toc-url']
+            if 'data-toc-label' in attrib:
+                del attrib['data-toc-label']
+            if parent_id:
+                del attrib['data-toc-child-of']
+            if previous_id:
+                del attrib['data-toc-after']
 
-                    parent_id = attrib['data-toc-child-of'] if 'data-toc-child-of' in attrib else None
-                    if parent_id == id:
-                        parent_id = None
+        token_dict = toc_data['token_dict']
 
-                    previous_id = attrib['data-toc-after'] if 'data-toc-after' in attrib else None
-                    if previous_id == id:
-                        previous_id = None
+        _insert_ext_tokens(toc_tokens, ext_tokens, token_dict, toc_data['parent_token_dict'])
 
-                    ext_tokens.append([
-                        token,
-                        parent_id,
-                        previous_id
-                    ])
-
-                    del attrib['data-toc-label']
-                    if parent_id:
-                        del attrib['data-toc-child-of']
-                    if previous_id:
-                        del attrib['data-toc-after']
-
-            if 'data-toc-root-sort' in attrib:
-                sort_root = attrib['data-toc-root-sort']
-                del attrib['data-toc-root-sort']
-
-        _insert_ext_tokens(toc_tokens, ext_tokens, token_dict, parent_token_dict)
-
-        for id, behavior in sort_token_ids.items():
+        for id, behavior in toc_data['sort_token_ids'].items():
             token = token_dict.get(id)
             _sort_tokens(token['children'], behavior)
 
-        if sort_root:
-            _sort_tokens(toc_tokens, sort_root)
+        if toc_data['sort_root']:
+            _sort_tokens(toc_tokens, toc_data['sort_root'])
 
         toc_element = _build_toc_element(toc_tokens, self.title)
 

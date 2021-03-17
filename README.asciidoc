@@ -60,25 +60,46 @@ required.
 
 === Inserting a new entry
 
-The purpose of the Table of Contents is to provide links to some point
-in your document. The standard `toc` extension just supports Markdown
-headers, however we support any element that has both an ID and a
-`data-toc-label` attribute.
+Whilst the standard `toc` extension only supports Markdown headers and
+uses the header depth to nest table of contents entries. `toc_ext`
+supports generating table of contents entries linking to any element
+on the page.
+
+Entries are created based on the presence of `data-toc-*` attributes
+contained within your markdown.
+
+==== Top level
+
+If you provide a `data-toc-label` attribute on its lonesome, then a ToC
+entry will be inserted as the first entry (at the root level) in the
+ToC.
 
 [source,markdown]
 ----
 [](){: #top data-toc-label="Goto Top" }
 ----
 
-This will insert an entry with the text "Goto Top" linking to our
-empty (i.e. invisible) anchor with the ID `top`.
+The above will insert an entry with the text "Goto Top", linking to an
+empty (invisible) anchor, which is explicitly given the ID `top`.
 
-_**Note**: We strip `data-toc-*` attributes that we consume. So the above
-will simply generate `<a id="top" href=""></a>`._
+NOTE: We strip `data-toc-*` attributes that we consume. So the
+resultant generated anchor will simply be `<a id="top" href=""></a>`._
+
+You may omit an explicit ID, and an ID will be generated for you based
+on the ToC label e.g.
+
+[source,markdown]
+----
+[](){: data-toc-label="Goto Top" }
+----
+
+This will result in an empty/invisible anchor on the page,
+`<a id="goto-top" href=""></a>` and a single ToC entry with the text
+`Goto Top`.
 
 === Inserting a child entry
 
-By default, we insert entries at the _top_ of the Table of Contents.
+By default, we insert entries at the _top_ of the table of contents.
 However, we may wish to insert the entry as a child of another entry.
 This is achieved by the inclusion of the `data-toc-child-of` attribute
 specifying the ID of another TOC entry.
@@ -87,17 +108,16 @@ specifying the ID of another TOC entry.
 ----
 ## Category 1
 
-[](){: #intro data-toc-label="Intro" data-toc-child-of="category-1" }
 Some introductory text that doesn't warrant a heading.
+{: data-toc-label="Intro" data-toc-child-of="category-1" }
 
 ## Category 2
 
-[](){: #top data-toc-label="Technobabble" data-toc-child-of="glossary" }
-**Technobabble** is really important:
+**Technobabble**{: data-toc-child-of="glossary" } is really important:
 
 * We want readers to understand the concept before moving on.
 * We don't want unnecessary headings breaking the page's flow.
-* We also want this definition appearing in the Table of Contents, for easy lookup.
+* We also want this definition appearing in the table of contents, for easy lookup.
 
 ## Glossary
 
@@ -115,6 +135,9 @@ The above will generate:
 ** Technobabble
 ** Peripheral
 
+TIP: You may omit `data-toc-label`. If you do, the ToC label will be
+generated from the contents of the target element.
+
 === Inserting after another entry (manual ordering)
 
 In the above example, we ended up with "Technobabble" appearing before
@@ -128,9 +151,14 @@ with the ID of the element that our entry should appear after.
 ----
 ## Alphabet
 
-[](){: #b data-toc-label="B" data-toc-after="a" } B.
-[](){: #a data-toc-label="A" data-toc-child-of="alphabet" } A.
-[](){: #c data-toc-label="C" data-toc-after="b" } C.
+B
+{: data-toc-after="a" }
+
+A
+{: data-toc-child-of="alphabet" }
+
+C
+{: data-toc-after="b" }
 ----
 
 The above will generate:
@@ -152,9 +180,14 @@ The example above can therefore be alternatively expressed as:
 ----
 ## Alphabet {: data-toc-sort }
 
-[](){: #b data-toc-label="B" data-toc-child-of="alphabet" } B.
-[](){: #a data-toc-label="A" data-toc-child-of="alphabet" } A.
-[](){: #c data-toc-label="C" data-toc-child-of="alphabet" } C.
+B
+{: data-toc-child-of="alphabet" }
+
+A
+{: data-toc-child-of="alphabet" }
+
+C
+{: data-toc-child-of="alphabet" }
 ----
 
 ==== Reverse
@@ -165,9 +198,14 @@ Reverse ordering is supported by `data-toc-sort="reverse"` e.g.
 ----
 ## Alphabet {: data-toc-sort="reverse" }
 
-[](){: #b data-toc-label="B" data-toc-child-of="alphabet" } B.
-[](){: #a data-toc-label="A" data-toc-child-of="alphabet" } A.
-[](){: #c data-toc-label="C" data-toc-child-of="alphabet" } C.
+B
+{: data-toc-child-of="alphabet" }
+
+A
+{: data-toc-child-of="alphabet" }
+
+C
+{: data-toc-child-of="alphabet" }
 ----
 
 will generate:
@@ -187,9 +225,14 @@ Both:
 
 [source,markdown]
 ----
-[](){: #b data-toc-label="B" data-toc-root-sort } B.
-[](){: #a data-toc-label="A" } A.
-[](){: #c data-toc-label="C" } C.
+B
+{: data-toc-root-sort data-toc-label="B" }
+
+A
+{: data-toc-label="A" }
+
+C
+{: data-toc-label="C" }
 ----
 
 and:
