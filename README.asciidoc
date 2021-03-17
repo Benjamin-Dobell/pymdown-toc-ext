@@ -83,7 +83,7 @@ The above will insert an entry with the text "Goto Top", linking to an
 empty (invisible) anchor, which is explicitly given the ID `top`.
 
 NOTE: We strip `data-toc-*` attributes that we consume. So the
-resultant generated anchor will simply be `<a id="top" href=""></a>`._
+resultant generated anchor will simply be `<a id="top" href=""></a>`.
 
 You may omit an explicit ID, and an ID will be generated for you based
 on the ToC label e.g.
