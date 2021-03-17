@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pymdown-toc-ext"
-version = "1.3.0"
+version = "1.3.1"
 description = "An extension for Python-Markdown which extends the built-in toc extension with additional capabilities to customize the generated table of contents."
 license = "MIT"
 authors = ["Benjamin Dobell <benjamin.dobell@glassechidna.com.au>"]
