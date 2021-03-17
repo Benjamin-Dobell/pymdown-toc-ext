@@ -205,24 +205,45 @@ def _get_toc_element_id(treeprocessor, el, used_ids):
 class TocExtTreeprocessor(TocTreeprocessor):
     def __init__(self, md, config):
         super().__init__(md, config)
+        self.search_sections = config['mkdocs_search_sections']
 
     # Ssh ssh. Quiet now. This is fine. Not likely to break at all.
     def build_toc_div(self, toc_tokens):
         toc_data = _process_doc(self.doc, toc_tokens)
 
         ext_tokens = []
+        search_sections = self.search_sections
 
         # Add TOC tokens
         for el in toc_data['toc_ext_elements']:
             id = _get_toc_element_id(self, el, toc_data['used_ids'])
+            name = _get_toc_element_label(el)
+            attrib = el.attrib
+
+            search_id = id
+            searchable = search_sections
+
+            if 'data-toc-searchable' in attrib:
+                searchable = attrib['data-toc-searchable'] != 'false'
+                del attrib['data-toc-searchable']
+
+            if searchable:
+                # This is *incredibly* awful. Seriously.
+                # Really we should implement a mkdocs plugin that does what we want.
+                attrib['style'] = 'position: relative;' + (attrib.get('style') or '')
+                attrib['id'] = unique(search_id, toc_data['used_ids'])
+                heading_el = Element('h6')
+                heading_el.text = name
+                heading_el.attrib['style'] = 'position: absolute; top: 0; display: block; height: 0; overflow: hidden'
+                heading_el.attrib['id'] = search_id
+                heading_el.set('data-toc-mock-searchable', '')
+                el.insert(0, heading_el)
 
             token = {
-                'id': id,
-                'name': _get_toc_element_label(el),
+                'id': search_id,
+                'name': name,
                 'children': []
             }
-
-            attrib = el.attrib
 
             if 'data-toc-url' in attrib:
                 token['url'] = attrib['data-toc-url']
@@ -294,8 +315,11 @@ class TocExtExtension(TocExtension):
     def __init__(self, **kwargs):
         self.__config = {
             "patch_mkdocs": [True,
-                       'Whether we should patch mkdocs to enable support for'
-                       'custom URLs in its TOCs. Defaults to True']
+                             'Whether we should patch mkdocs to enable support for'
+                             'custom URLs in its TOCs. Defaults to True'],
+            "mkdocs_search_sections": [False,
+                                       'Whether each table of contents target should introduce'
+                                       'a mkdocs search section. Defaults to False'],
         }
         super().__init__(**kwargs)
         if self.config['patch_mkdocs'][0]:
